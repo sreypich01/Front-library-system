@@ -1,15 +1,8 @@
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
+  <div>
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">About This Dashboard</h2>
+    <p class="text-gray-700 leading-relaxed">
+      This is a simple dashboard layout created using Vue 3 and styled with Tailwind CSS. It includes a fixed sidebar, header, and dynamic routing.
+    </p>
   </div>
 </template>
-
-<style>
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-}
-</style>
