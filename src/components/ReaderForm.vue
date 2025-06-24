@@ -26,8 +26,9 @@
 
 <script setup>
 import { reactive, watch } from 'vue'
-import axios from '@/plugin/axios'
+import axios from 'axios'
 import { useToast } from 'vue-toastification'
+import { getReaders, createReader, updateReader,deleteReader } from '@/api/reader'
 
 const props = defineProps(['show', 'editReader'])
 const emit = defineEmits(['close', 'added'])
@@ -60,10 +61,10 @@ const close = () => emit('close')
 const submit = async () => {
   try {
     if (form.id) {
-      await axios.put(`/readers/${form.id}`, form)
+      await updateReader(form.id, form)  // Using the imported updateReader function
       toast.success('Reader updated successfully')
     } else {
-      await axios.post('/readers', form)
+      await createReader(form)  // Using the imported createReader function
       toast.success('Reader added successfully')
     }
     emit('added')
