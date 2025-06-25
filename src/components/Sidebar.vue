@@ -8,7 +8,7 @@
     <nav class="space-y-2">
       <!-- Dashboard -->
       <RouterLink 
-        to="/dashboard" 
+        to="/" 
         class="flex items-center gap-3 p-3 rounded-lg hover:bg-teal-600 transition-colors"
         active-class="bg-teal-800"
       >
