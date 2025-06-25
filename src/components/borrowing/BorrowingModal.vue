@@ -16,6 +16,7 @@
                 v-model="form.book_id"
                 id="book_id"
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                :class="{ 'border-red-500': errors.book_id }"
                 required
               >
                 <option value="" disabled>Select a book</option>
@@ -23,6 +24,7 @@
                   {{ book.title }}
                 </option>
               </select>
+              <p v-if="errors.book_id" class="text-red-500 text-xs italic">{{ errors.book_id }}</p>
             </div>
 
             <div>
@@ -33,6 +35,7 @@
                 v-model="form.reader_id"
                 id="reader_id"
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                :class="{ 'border-red-500': errors.reader_id }"
                 required
               >
                 <option value="" disabled>Select a reader</option>
@@ -40,6 +43,7 @@
                   {{ reader.name }}
                 </option>
               </select>
+              <p v-if="errors.reader_id" class="text-red-500 text-xs italic">{{ errors.reader_id }}</p>
             </div>
 
             <div>
@@ -51,8 +55,10 @@
                 id="borrowed_at"
                 type="date"
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                :class="{ 'border-red-500': errors.borrowed_at }"
                 required
               >
+              <p v-if="errors.borrowed_at" class="text-red-500 text-xs italic">{{ errors.borrowed_at }}</p>
             </div>
 
             <div>
@@ -60,13 +66,15 @@
                 Quantity
               </label>
               <input
-                v-model="form.quantity"
+                v-model.number="form.quantity"
                 id="quantity"
                 type="number"
                 min="1"
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                :class="{ 'border-red-500': errors.quantity }"
                 required
               >
+              <p v-if="errors.quantity" class="text-red-500 text-xs italic">{{ errors.quantity }}</p>
             </div>
           </div>
 
@@ -81,8 +89,10 @@
             <button
               type="submit"
               class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded"
+              :disabled="loading"
             >
-              {{ editBorrowing ? 'Update' : 'Save' }}
+              <span v-if="loading">Processing...</span>
+              <span v-else>{{ editBorrowing ? 'Update' : 'Save' }}</span>
             </button>
           </div>
         </form>
@@ -106,6 +116,8 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved'])
 
 const toast = useToast()
+const loading = ref(false)
+const errors = ref({})
 const form = reactive({
   id: null,
   book_id: '',
@@ -150,23 +162,34 @@ watch(() => props.editBorrowing, (newVal) => {
     form.borrowed_at = newVal.borrowed_at.split('T')[0]
     form.quantity = newVal.quantity
   } else {
-    form.id = null
-    form.book_id = ''
-    form.reader_id = ''
-    form.borrowed_at = new Date().toISOString().split('T')[0]
-    form.quantity = 1
+    resetForm()
   }
 })
 
-const close = () => emit('close')
+const resetForm = () => {
+  form.id = null
+  form.book_id = ''
+  form.reader_id = ''
+  form.borrowed_at = new Date().toISOString().split('T')[0]
+  form.quantity = 1
+  errors.value = {}
+}
+
+const close = () => {
+  resetForm()
+  emit('close')
+}
 
 const submit = async () => {
   try {
+    loading.value = true
+    errors.value = {}
+
     const borrowingData = {
       book_id: form.book_id,
       reader_id: form.reader_id,
       borrowed_at: form.borrowed_at,
-      quantity: form.quantity
+      quantity: parseInt(form.quantity) // Ensure it's a number
     }
 
     if (form.id) {
@@ -176,11 +199,20 @@ const submit = async () => {
       await createBorrowing(borrowingData)
       toast.success('Borrow record created successfully')
     }
+    
     emit('saved')
     close()
   } catch (err) {
-    toast.error('Failed to save borrow record')
-    console.error(err)
+    if (err.response?.status === 422) {
+      // Handle validation errors
+      errors.value = err.response.data.errors
+      toast.error('Please fix the validation errors')
+    } else {
+      toast.error(err.response?.data?.message || 'Failed to save borrow record')
+      console.error(err)
+    }
+  } finally {
+    loading.value = false
   }
 }
 </script>
